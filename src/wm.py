@@ -1,48 +1,85 @@
 #!/usr/bin/env python
+# Authored by Reid "arrdem" McKenzie, 10/09/2013
+# Licenced under the terms of the EPL 1.0
 
-def roll_combinatons(n_dice, val):
-    if(n_dice == 0):
-        return 0
-
-    elif(n_dice == 1 and val > 0 and val < 7):
-        return 1
-
-    else:
-        combos = 0
-        for i in range(1, 7):
-            if(val > i):
-                combos += roll_combinatons(n_dice - 1, val - i)
-        return combos
+import json
 
 
-def odds_of_beating(dice, threshold):
-    integ = 0
+class Model():
+    """Model is the relatively abstract base class for most models in the
+    Warmachine tabletop game. The concept of a Model is that it is an active
+    piece on the board, and is consequently required to exhibit the following
+    basic attributes common to all pieces.
 
-    for i in range(threshold, 6 * dice + 1):
-        integ += roll_combinatons(dice, i)
+    Models are inteded to be serialized into and from a JSON object as so:
+    {"name":<string name>,
+     "type":<one of ["solo", "warcaster", "warjack", "unit"]>,
+     "size":<base size of model>,
+     "attrs":{"spd":<speed value>,
+              "str":<strength value>,
+              "mat":<mele attack base>,
+              "rat":<ranged attack base>,
+              "def":<defense base>,
+              "arm":<armor base>,
+              "cmd":<command value>,
+              "boxes":<list of boxes per column>,
 
-    return float(integ) / (6.0 ** dice)
+              // other meaningful keys
+              ["pc":<point cost>,]
+              ["focus":<focus value>,]
 
+              // boolean flag keys
+              // presence requires that they have the value of true,
+              // absence means they will get the value of false.
+              ["warjack marshal":<bool>,]
+              ["officer":<bool>,]
+              ["standard bearer":<bool>,]
+              ["shield":<bool>,]
+              ["fearless":<bool>,]
+              ["abomination":<bool>,]
+              ["immunity":{ ... },]
+              },
+    "weapons":[{"name":<string name>,
+                "type":<one of ["ranged", "mele"]>,
+                "rng":<0.25 or 2 if "type":"mele", else range>,
+                "pow":<integer power, mele weapons should use P not P+S >,
+                ["rof":<integer rof if "type":"ranged">,]
+                "attrs":{// boolean flags
+                         ["magical":<bool>,]
+                         ["disruption":<bool>,]
+                         ["cold":<bool>,]
+                         ["corrosion":<bool>,]
+                         ["electricity":<bool>,]
+                         ["fire":<bool>,]
+                        }}
+               ....]
+    "allowance":<max field allowance for the model,
+                 inf if not present>,
+    [// present only in "type":"unit" records
+     "models":[{"name":<name of model in unit>,
+                "min":{"pc":<point cost for bringing min models>,
+                       "count":<count of models to bring at cost>},
+                "max":<see min for structure>},
+               ... <for other models>]]
+    }
 
-def avg_damage(dice, modifier):
-    dmg = 0
-    combos = 0
+    Note:
+        "model" relatively nicely provides not only for single models
+        such as casters, but also for model groups thus allowing a
+        squad of stormblades to be represented as the compose of the
+        individuals.
 
-    for i in range(dice, 6 * dice + 1):
-        tmp_c = roll_combinatons(dice, i)
-        combos += tmp_c
+    FIXME:
+        The only issue with this representation is that it provides no
+        nice way to represent spells and effects. Some effects are
+        entirely unique which would mean that implementing a new card
+        would require a patch of some sort to the engine core, but
+        others (such as the Cygnar Snipe) are relatively common and
+        could be reused rather than repeated.
 
-        if(i + modifier > 0):
-            dmg += (i + modifier) * tmp_c
-
-    return float(dmg) / float(combos)
-
-
-def damage(r1, r2):
-    mat,d1,defence = r1
-    pow,d2,arm = r2
-
-    return ("%f%% to hit, %f average dmg dealt" 
-            % (odds_of_beating(d1, (defence - mat)),
-               avg_damage(d2, (pow - arm))))
-    
+        On the one hand I'm loath to allow for the use of (eval) to
+        load code from what should strictly be a configuration file,
+        but on the other hand especially for complicated cards I see
+        no other reasonable way to provide for potentially piece
+        behavior.
+    """
