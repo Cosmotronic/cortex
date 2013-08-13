@@ -31,13 +31,15 @@ class Model():
               // boolean flag keys
               // presence requires that they have the value of true,
               // absence means they will get the value of false.
-              ["warjack marshal":<bool>,]
-              ["officer":<bool>,]
-              ["standard bearer":<bool>,]
-              ["shield":<bool>,]
-              ["fearless":<bool>,]
-              ["abomination":<bool>,]
-              ["immunity":{ ... },]
+              ["cra":<bool>,             // can participate in a cra]
+              ["cma":<bool>,             // can participate in a cma]
+              ["warjack marshal":<bool>, // can marshal a jack]
+              ["officer":<bool>,         // is considered an officer]
+              ["standard bearer":<bool>, // has a flag]
+              ["shield":<bool>,          // has a shield (+2 arm)]
+              ["fearless":<bool>,        // ignores terror rules]
+              ["abomination":<bool>,     // invokes terror rules]
+              ["immunity":{ ... },       // ignores typed damage]
               },
     "weapons":[{"name":<string name>,
                 "type":<one of ["ranged", "mele"]>,
