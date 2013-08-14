@@ -8,6 +8,8 @@ import copy
 import os
 import stats
 import uuid
+import re
+
 
 # class decls
 class Model():
@@ -18,7 +20,7 @@ class Model():
 
     Models are inteded to be serialized into and from a JSON object as so:
     {"name":<string name>,
-     "type":<one of ["solo", "warcaster", "warjack", "unit", "construct"]>,
+     "type":<one of ["solo", "warcaster", "warjack", "construct", "model"]>,
      "size":<base size of model>,
      "attrs":{"spd":<speed value>,
               "str":<strength value>,
@@ -83,11 +85,6 @@ class Model():
                ... <for other models>]]
     }
 
-    Note: "model" relatively nicely provides not only for single
-        models such as casters, but also for model groups thus
-        allowing a squad of stormblades to be represented as the
-        compose of the individuals.
-
     FIXME: The only issue with this representation is that it provides
         no nice way to represent spells and effects. Some effects are
         entirely unique which would mean that implementing a new card
@@ -119,6 +116,9 @@ class Model():
         self.size = self._attrs['size']
         self.weapons = self._attrs['weapons']
         self.effects = {}
+
+        # compute an ID value which uniquely identifies this model
+        self.id=uuid.uuid4()
 
         # compute update for the other fields
         self.update()
@@ -161,19 +161,90 @@ class Model():
         self.effects.pop(id)
 
 
-class Unit():
-    """Unit is the basic representation for a group of models. Fundimentally it
-    is a list of models, being unit members, commanders, attachments and other
-    such Model type pieces.
+class Army():
+    """The basic representation for a whole bunch of units"""
+    def __init__(self, name=None):
+        self.list = {}
+        self.name = name
+        self.points = 0
 
-    FIXME: How exactly do Models interact with the Unit? What purpose
-           does Unit serve? How is Unit serialized & read differently
-           from Model?
+    def load(self, models, file, aliases=None):
+        """Reads a simple text file army listing and returns a list of Model
+        objects constututing the list as described in the read file. Aliases
+        is a map of nicknames to a "real" names and is just a hack to let
+        people write stuff like pCaine and eHaley in their army lists and let
+        Cortex understand what they "really" mean.
 
-    """
+        Army file grammar is '<number> [xX]? <name> \n?\r?,?'.
+        Lines starting with # are comments and are ignored.
 
+        FIXME: This code does not currently check model counts against
+               field allowance. This is a bug and should be fixed,
+               exceeding field allowance should generate at least some
+               warning prints.
+        """
 
-# helper fns..
+        army = {}
+        pattern = re.compile("([0-9]+) [xX]? ([^\n\r,]+)((\r?\n\r?)|,)")
+        for line in file.readlines():
+            if line[0] == '#':
+                continue
+            else:
+                num,name,_ = re.match(pattern,line)
+                model = None
+                # try to just load the model...
+                if name in models:
+                    model = models[name]
+                    # fall back to aliases...
+                elif name in aliases:
+                    model = models[aliases[name]]
+                    # bitch loudly
+                else:
+                    raise Exception("Unknown model '%s'!" % name)
+
+                m = Model(model._attrs)
+                army[m.id] = m
+
+        self.list = army
+        self.update()
+
+    def dump(self, file):
+        """Serializes an Army back out to a file in the same format that
+        armies are read in. Realisticaly this should use a real
+        serialization system rather than a custon reader/writer pair
+        but we'll go with this for now because it's dead simple and a
+        real human could write an army file.
+
+        """
+
+        count = {}
+        for k,m in self.list:
+            count[m.name] = (count[m.name] or 0) + 1
+
+        f.write("# automaticly dumped army\n")
+        f.write("# name %s\n" % self.name)
+        for name,c in count:
+            f.write("%s x %s\n" % (c, name))
+
+    def update(self):
+        """Recomputes the point value of an army. Intended use after loading
+        an army list or as part of an AI for evaluating effective
+        strength of an army after resolving some effects or attack.
+
+        """
+
+        pointval = 0
+        warcaster = false
+        for id,m in self.list:
+            if(m['type'] == "warcaster"):
+                pointval -= m['jack points']
+                if not warcaster:
+                    warcaster = true
+                else:
+                    pointval += m['pc']
+            else:
+                pointval += m['pc']
+        self.points = pointval
 
 
 # and now for main
