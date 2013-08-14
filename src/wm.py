@@ -168,7 +168,7 @@ class Army():
         self.name = name
         self.points = 0
 
-    def load(self, models, file, aliases=None):
+    def simpleLoad(self, models, file, aliases=None):
         """Reads a simple text file army listing and returns a list of Model
         objects constututing the list as described in the read file. Aliases
         is a map of nicknames to a "real" names and is just a hack to let
@@ -207,8 +207,9 @@ class Army():
 
         self.list = army
         self.update()
+        return None
 
-    def dump(self, file):
+    def simpleDump(self, file):
         """Serializes an Army back out to a file in the same format that
         armies are read in. Realisticaly this should use a real
         serialization system rather than a custon reader/writer pair
@@ -225,6 +226,66 @@ class Army():
         f.write("# name %s\n" % self.name)
         for name,c in count:
             f.write("%s x %s\n" % (c, name))
+        return None
+
+    def jsonLoad(self, models, file, aliases=None):
+        """Load an army from a JSON file!
+
+        Loads a JSON file presumed to have a .name and .list, where
+        .list is a list of string names or abbreviations for model
+        names. After rendering the json object to a map, this code
+        then renders the list of model names into the Army standard
+        {id:instance} map, and finally side effects the self object
+        into the constructed object.
+
+        Usage:
+            >>> foo = Army()
+            >>> open("myarmy.txt").read()
+            "{'name':'myarmy','list':['Squire', 'Lutenant Allister Caine']}"
+            >>> foo.jsonLoad(open("myarmy.txt"))
+            >>> foo.name
+            "myarmy"
+            >>> map(lambda (k,v): v.name, foo.list)
+            ["Squire", "Lutenant Allister Caine"]
+
+        """
+        inbj = json.loads(file.read(),
+                          object_hook=lambda(x): Army(Object(), x))
+        army = {}
+        for name in inbj.list:
+            model = None
+            # try to just load the model...
+            if name in models:
+                model = models[name]
+                # fall back to aliases...
+            elif name in aliases:
+                model = models[aliases[name]]
+                # bitch loudly
+            else:
+                raise Exception("Unknown model '%s'!" % name)
+
+            m = Model(model._attrs)
+            army[m.id] = m
+
+        inbj.list = army
+        self = inbj
+        return None
+
+    def jsonDump(self, file):
+        """Dump an army to a JSON file!
+
+        Naively sanitizes the self object by reducing the list map to
+        a list of Model .name fields, then blindly dumps the result to
+        a file. Only the .list field is guranteed, all others are up
+        in the air. Care should be taken so that this does not leak
+        weird runtime specific data such as UUID maps and lists.
+
+        """
+
+        outbj = copy.copy(self)
+        outbj.list = map(lambda (k,v): v.name, self.list)
+        json.dump(outbj, file)
+        return None
 
     def update(self):
         """Recomputes the point value of an army. Intended use after loading
@@ -245,6 +306,7 @@ class Army():
             else:
                 pointval += m['pc']
         self.points = pointval
+        return None
 
 
 # and now for main
