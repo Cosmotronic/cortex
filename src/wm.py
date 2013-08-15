@@ -6,7 +6,6 @@
 import json
 import copy
 import os
-import stats
 import uuid
 import re
 
@@ -109,6 +108,7 @@ class Model():
         """
         # preserve the serialized form...
         self._attrs = serialized_form
+        #print(serialized_form)
 
         # set some fields for ease of access
         self.name = self._attrs['name']
@@ -118,7 +118,7 @@ class Model():
         self.effects = {}
 
         # compute an ID value which uniquely identifies this model
-        self.id=uuid.uuid4()
+        self.id = uuid.uuid4()
 
         # compute update for the other fields
         self.update()
@@ -141,7 +141,13 @@ class Model():
         # set fields in self for ease of access defaulting to 0
         for key in ["speed","strength","mat","rat","defence","armor","cmd","focus",
                     "jack points","boxes","pc"]:
-            self.__dict__[key] = attrs[key] or 0
+            v = None
+            try:
+                v = attrs[key]
+            except KeyError:
+                v = 0
+
+            self.__dict__[key] = v
 
     def addEffect(self, fn, id=None):
         """Adds an effect fn to the Model's effects map. The key is the id
@@ -307,8 +313,3 @@ class Army():
                 pointval += m['pc']
         self.points = pointval
         return None
-
-
-# and now for main
-if __name__ == "__main__":
-    print("Cortex doesn't do anything yet!")
