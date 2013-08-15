@@ -4,6 +4,10 @@
 import stats
 import wm
 
+import sys
+import os
+import os.path
+
 
 def evaluate_attack(src_model, tgt_model):
     mele_weps = [w for w in src_model.weapons if w.type == "melee"]
@@ -70,10 +74,7 @@ def shell_read_str(line):
     return split
 
 
-if __name__ == '__main__':
-    # Cortex
-    #   a Warmachine strategery toolkit
-    #
+def repl(file_like, aliases={}, models={}):
     # Implemented Commands:
     #
     # "load models <filename>"
@@ -110,8 +111,15 @@ if __name__ == '__main__':
     
     while True:
         line = []
-        line = raw_input("->> ")
+
+        if(file_like == sys.stdin):
+            sys.stdout.write("->> ")
+
+        line = file_like.readline()
         line = shell_read_str(line)
+        line = [s.strip() for s in line]
+
+        #print(line)
         
         # case 0: 
         #    exit code! gotta be able to quit...
@@ -160,5 +168,32 @@ if __name__ == '__main__':
     
         else:
             print("Unknown command!")
+
+    return (aliases, models)
+
+
+if __name__ == '__main__':
+    # Cortex
+    #   a Warmachine strategery toolkit
+    #
+    #   Loads and interprets the file ~/.cortexrc as though all
+    #   commands were being typed at the repl before dropping into
+    #   read/eval/print mode for user IO.
+    #
+    aliases = {}
+    models = {}
+    
+    if os.path.exists(os.path.abspath("~/.cortexrc")):
+        #print("loading config file...")
+        aliases, models = repl(open("~/.cortexrc"),
+                               aliases=aliases,
+                               models=models)
+
+    repl(sys.stdin,
+         aliases=aliases,
+         models=models)
+
+    exit(0)
+        
         
     
