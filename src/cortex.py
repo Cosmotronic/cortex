@@ -76,45 +76,35 @@ def shell_read_str(line):
 
 
 def repl(file_like, aliases={}, models={}):
-    # Implemented Commands:
-    #
-    # "load models <filename>"
-    #    loads a model descriptor file, side effecting the current
-    #    state of the interpreter to add more models.
-    #
-    # "load aliases <filename>"
-    #    loads a file which describes a mapping fom abbreviated names
-    #    to official model names, so as to make life easiser for the
-    #    user.
-    #
-    # "load army [-j|-s] <name> <filename>"
-    #    loads an army from a file using the simple army format if -s,
-    #    and json by default or with -j.
-    #
-    # "alias cmd <alias> <name>"
-    #    creates a command alias
-    #
-    # "alias model <alias> <name>"
-    #
-    # "ls models"
-    #    enumerates the loaded models by name
-    #
-    # "ls aliases"
-    #    enumerates the loaded aliases by abbrev -> real name
-    #
-    # "attack <model name> [with modifiers...] <model name> [with modifiers...]"
-    #    enumerates and evaluates all attack options for one model
-    #    against another, evaluating every weapon the attacking model
-    #    has against the target at range and in charge. Attacking
-    #    warcasters and warjacks will compute the probable outcomes of
-    #    different boosting strategies as well.
-    #
-    # "reset"
-    #    clears out all the state of the repl, essentially restarting
-    #    it without quitting and reloading
-    #
-    # "quit" | "exit" | ":q"
-    #    exits the Cortex program
+    """Implemented Commands:
+     "load models <filename>"
+        loads a model descriptor file, side effecting the current
+        state of the interpreter to add more models.
+    
+     "alias model <alias> <name>"
+        creates an alias for a model, hopefully something easier to type
+    
+     "ls models"
+        enumerates the loaded models by name
+    
+     "ls aliases"
+        enumerates the loaded aliases by abbrev -> real name
+    
+     "attack <model name> [with modifiers...] <model name> [with modifiers...]"
+        enumerates and evaluates all attack options for one model
+        against another, evaluating every weapon the attacking model
+        has against the target at range and in charge. Attacking
+        warcasters and warjacks will compute the probable outcomes of
+        different boosting strategies as well.
+    
+     "reset"
+        clears out all the state of the repl, essentially restarting
+        it without quitting and reloading
+    
+     "quit" | "exit" | ":q"
+        exits the Cortex program
+
+    """
 
     retry = False
     while True:
@@ -126,9 +116,14 @@ def repl(file_like, aliases={}, models={}):
                 line = shell_read_str(line)
                 line = [s.strip() for s in line]
 
+        # case -1:
+        #    help code! gotta help t3h pplz out!
+        if(line[0] == "help"):
+            help(repl)
+
         # case 0:
         #    exit code! gotta be able to quit...
-        if(line[0] in ["quit", "exit", ":wq", ":q"]):
+        elif(line[0] in ["quit", "exit", ":wq", ":q"]):
             return 0
 
         elif(line[0] == "break"):
