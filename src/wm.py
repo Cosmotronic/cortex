@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Authored by Reid "arrdem" McKenzie, 10/09/2013
 # Licenced under the terms of the EPL 1.0
 
@@ -139,7 +139,7 @@ class Model():
             attrs = e(attrs)
 
         # set fields in self for ease of access defaulting to 0
-        for key in ["spd","str","mat","rat","def","arm","cmd","focus",
+        for key in ["speed","strength","mat","rat","defence","armor","cmd","focus",
                     "jack points","boxes","pc"]:
             self.__dict__[key] = attrs[key] or 0
 
