@@ -27,13 +27,17 @@ def evaluate_attack(src_model, tgt_model):
 
     print("Damage options:")
     # compute the boosted/unboosted damage outcomes
-    for w in src_model.weapons:
-        print("  using weapon %s:" % w['name'])
-        unboosted_dmg = stats.avg_damage(2, (w['pow'] - tgt_model.armor))
-        boosted_dmg = stats.avg_damage(3, (w['pow'] - tgt_model.armor))
-
-        print("    unbooosted: %d\n    boosted: %d"
-              % (unboosted_dmg, boosted_dmg))
+    if(len(src_model.weapons) > 0):
+        for w in src_model.weapons:
+            print("  using %s: (%s:%f)" % (w['name'], w['type'], w['rng']))
+            pow = w['pow'] + (src_model.strength if w['type'] == 'melee' else 0)
+            unboosted_dmg = stats.avg_damage(2, (pow - tgt_model.armor))
+            boosted_dmg = stats.avg_damage(3, (pow - tgt_model.armor))
+            
+            print("    unbooosted: %d\n    boosted: %d"
+                  % (unboosted_dmg, boosted_dmg))
+    else:
+        print("  No weapons on this model!")
 
 
 def shell_read_str(line):
@@ -202,14 +206,20 @@ def repl(file_like, aliases={}, models={}):
             while(not a_model in models and a_model in aliases):
                 a_model = aliases[a_model]
             a_model = models[a_model]
+            
+            # FIXME
+            #    apply the stat changes to a_model as specified
 
             # pull d_model's real name out of aliases
             while(not d_model in models and d_model in aliases):
                 d_model = aliases[d_model]
             d_model = models[d_model]
 
-            print(a_model, a_with)
-            print(d_model, d_with)
+            # FIXME
+            #    apply the stat changes to d_model as specified
+
+            #print(a_model, a_with)
+            #print(d_model, d_with)
 
             # FIXME:
             #
