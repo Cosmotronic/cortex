@@ -11,7 +11,14 @@ import os.path
 
 
 def evaluate_attack(src_model, tgt_model):
-    mele_weps = [w for w in src_model.weapons if w['type'] == "melee"]
+    """Takes a pair of Model objects and computes the first's options to
+    damage the second, printing a reasonable English table to Standard
+    Out. Intended for REPL use, not yet suited for use by an AI in
+    computing weapon selection.
+
+    """
+
+    mele_weps = [w for w in src_model.weapons if w['type'] == "melee"] 
     ranged_weps = [w for w in src_model.weapons if w['type'] == "ranged"]
 
     # compute boosted/unboosted hit odds
@@ -39,12 +46,21 @@ def evaluate_attack(src_model, tgt_model):
     else:
         print("  No weapons on this model!")
 
+    # FIXME
+    #    This function should store the weapon damage and hit numbers
+    #    and return it in a reasonable structure that an AI could make
+    #    use of rather than barfing it to standard out and promptly
+    #    forgetting about it.
+    return None
+
 
 def shell_read_str(line):
+
     """Reads a line the same way BASH would, grouping and stripping
     quotes, splitting at spaces and soforth.
 
     """
+
     split = []
     buff = ''
     quote = None
@@ -176,10 +192,13 @@ def repl(file_like, aliases={}, models={}):
         #    basic stats and against modified stats, such as a +5 arm
         #    effect (Stryker's ult), a shield spell or soforth.
         elif(line[0] == "attack"):
-            a_model = line[1]
+            # FIXME
+            #    INLINE ARGUMENT PARSING IS DISGUSTING AND SHOULD BE REFACTORED
             
+            a_model = line[1]
             a_with = 2
             i = 2
+
             if(i < len(line) and line[i] == "with"):
                 while(line[i] != "end" and i < len(line)):
                     i += 1
@@ -188,19 +207,6 @@ def repl(file_like, aliases={}, models={}):
                 else:
                     i += 1
             a_with = line[a_with:i]
-                    
-            d_model = line[i]
-
-            i += 1
-            d_with = i
-            if(i < len(line) and line[i] == "with"):
-                while(line[i] != "end" and i < len(line)):
-                    i += 1
-                if(i == len(line)):
-                    print("Error, no 'end' found in the defender modifier list!")
-                else:
-                    i += 1
-            d_with = line[d_with:i]
 
             # pull a_model's real name out of aliases
             while(not a_model in models and a_model in aliases):
@@ -210,6 +216,20 @@ def repl(file_like, aliases={}, models={}):
             # FIXME
             #    apply the stat changes to a_model as specified
 
+                    
+            d_model = line[i]
+            i += 1
+            d_with = i
+
+            if(i < len(line) and line[i] == "with"):
+                while(line[i] != "end" and i < len(line)):
+                    i += 1
+                if(i == len(line)):
+                    print("Error, no 'end' found in the defender modifier list!")
+                else:
+                    i += 1
+            d_with = line[d_with:i]
+
             # pull d_model's real name out of aliases
             while(not d_model in models and d_model in aliases):
                 d_model = aliases[d_model]
@@ -217,6 +237,10 @@ def repl(file_like, aliases={}, models={}):
 
             # FIXME
             #    apply the stat changes to d_model as specified
+
+            #############################################
+            # now go ahead and do the attack evaluation #
+            #############################################
 
             #print(a_model, a_with)
             #print(d_model, d_with)
