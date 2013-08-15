@@ -76,12 +76,6 @@ class Model():
                ....]
     "allowance":<max field allowance for the model,
                  inf if not present>,
-    [// present only in "type":"unit" records
-     "models":[{"name":<name of model in unit>,
-                "min":{"pc":<point cost for bringing min models>,
-                       "count":<count of models to bring at cost>},
-                "max":<see min for structure>},
-               ... <for other models>]]
     }
 
     FIXME: The only issue with this representation is that it provides
@@ -96,6 +90,10 @@ class Model():
         but on the other hand especially for complicated cards I see
         no other reasonable way to provide for potentially piece
         behavior.
+
+    FIXME: This provides no reasonable way to represent a collection
+        of singular models, such as Stormblade Infantry (as a block of
+        6/9 or Trencher Infantry). How to represent a group of models?
 
     """
 
