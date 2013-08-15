@@ -98,9 +98,9 @@ def shell_read_str(line):
 def repl(file_like, aliases={}, models={}):
     """Implemented Commands:
      "load models <filename>"
-        loads a model descriptor file, side effecting the current
-        state of the interpreter to add more models.
-    
+        loads a model descriptor file, being a list of Model compatible
+        JSON objects and enters them into the interpreter's model table.
+
      "alias model <alias> <name>"
         creates an alias for a model, hopefully something easier to type
     
