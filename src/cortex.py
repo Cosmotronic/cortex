@@ -5,6 +5,7 @@ import stats
 import wm
 
 import sys
+import json
 import os
 import os.path
 
@@ -93,7 +94,13 @@ def repl(file_like, aliases={}, models={}):
     # "alias cmd <alias> <name>"
     #    creates a command alias
     #
-    # "alias model <alias> <name>
+    # "alias model <alias> <name>"
+    #
+    # "ls models"
+    #    enumerates the loaded models by name
+    #
+    # "ls aliases"
+    #    enumerates the loaded aliases by abbrev -> real name
     #
     # "attack <model name> [with modifiers...] <model name> [with modifiers...]"
     #    enumerates and evaluates all attack options for one model
@@ -109,32 +116,43 @@ def repl(file_like, aliases={}, models={}):
     # "quit" | "exit" | ":q"
     #    exits the Cortex program
     
+    retry = False
     while True:
-        line = []
-
-        if(file_like == sys.stdin):
-            sys.stdout.write("->> ")
-
-        line = file_like.readline()
-        line = shell_read_str(line)
-        line = [s.strip() for s in line]
-
-        #print(line)
+        if(not retry):
+            line = []
+            if(file_like == sys.stdin):
+                sys.stdout.write("->> ")
+                line = file_like.readline()
+                line = shell_read_str(line)
+                line = [s.strip() for s in line]    
+            print(line)
         
         # case 0: 
         #    exit code! gotta be able to quit...
         if(line[0] in ["quit", "exit", ":wq", ":q"]):
             return 0
             
+        elif(line[0] == "break"):
+            break
+
         # case 1:
         #    load code! gotta be able to read in datafiles...
         elif(line[0] == "load"):
             # what are we loading?
             if(line[1] == "models"):
-                pass
+                if(os.path.exists(line[2])):
+                    new_models = {m['name']:wm.Model(m)
+                                  for m in json.load(open(line[2]))}
+                    models = dict(models.items() + new_models.items())
+                else:
+                    print("Error: no such file %s" % line[2])
                 
             elif(line[1] == "aliases"):
-                pass
+                if(os.path.exists(line[2])):
+                    pass
+
+                else:
+                    print("Error: no such file %s" % line[2])
                 
             else:
                 pass
@@ -145,13 +163,14 @@ def repl(file_like, aliases={}, models={}):
             # what alias type are we creating?
             if(line[1] == "cmd"):
                 pass
+
             elif(line[1] == "model"):
                 pass
                 
             else:
                 pass
                 
-        # case 3 
+        # case 3:
         #    attack code! this is what this entire tool was built for...
         #    grammar is as follows:
         #    "attack <name> [with [def|arm|pow|mat|rat]:[-|+]<number>+ end] \
@@ -163,10 +182,37 @@ def repl(file_like, aliases={}, models={}):
         elif(line[0] == "attack"):
             pass
 
+        # case 4:
+        #   inspection code! this code allows a user to inspec the
+        #   list of models and aliases which have been loaded thus far
+        #   and hopefully verify that the commands are behaving as
+        #   intended.
+        elif(line[0] == "ls"):
+            if(line[1] == "models"):
+                print("loaded models:")
+                for k in models:
+                    print("  %s" % k)
+
+            elif(line[1] == "aliases"):
+                print("loaded aliases:")
+                for k in aliases:
+                    print("  %s -> %s" % (k, aliases[k]))
+            
+            else:
+                print("Unknown ls subcommand '%s'!" % (apply(str, line[1:])))
+                    
+
         elif(line[0] == "reset"):
-            pass
+            print("Hard resetting models and aliases...")
+            models = {}
+            aliases = {}
     
         else:
+            # FIXME:
+            #    look up line[0] from the alias table, set line[] and
+            #    restart by setting the retry flag!
+            #
+            #    if the retry flag was already set, uset it.
             print("Unknown command!")
 
     return (aliases, models)
@@ -192,8 +238,6 @@ if __name__ == '__main__':
     repl(sys.stdin,
          aliases=aliases,
          models=models)
-
-    exit(0)
         
         
     
