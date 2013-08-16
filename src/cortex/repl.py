@@ -38,7 +38,11 @@ def dispatch_load(line, env={}):
                     print("Error parsing data file '%s':\n  %s" % (line[2], e))
                     return (env, True)
 
-                env['models'] = dict(env['models'].items() + new_models.items())
+                _tmp = dict()
+                _tmp.update(env['models'])
+                _tmp.update(new_models)
+
+                env['models'] = _tmp
             else:
                 print("Error: no such file %s" % line[2])
 
