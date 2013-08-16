@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+# Authored by Reid "arrdem" McKenzie, 10/09/2013
+# Licenced under the terms of the EPL 1.0
+import helpers
+import wm
+
+import os.path
+import json
+
+_dispatch = {}
+
+
+def dispatch_load(line, env={}):
+    # case 1:
+    #    load code! gotta be able to read in datafiles...
+    if(line[0] == "load"):
+        # what are we loading?
+        if(line[1] == "models"):
+            if(os.path.exists(os.path.abspath(line[2]))):
+                new_models = {m['name']:wm.Model(m)
+                              for m in json.load(open(line[2]))}
+                env['models'] = dict(env['models'].items() + new_models.items())
+            else:
+                print("Error: no such file %s" % line[2])
+
+        elif(line[1] == "aliases"):
+            # FIXME
+            print("Alias loading isn't supported yet!")
+
+        elif(line[1] == "army"):
+            # FIXME
+            print("Army loading isn't supported yet!")
+
+        else:
+            pass
+        return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['load'] = dispatch_load
+
+
+def dispatch_alias(line, env={}):
+    # case 2:
+    #    alias code! I want to be able to create aliases...
+    if(line[0] == "alias"):
+        # what alias type are we creating?
+        if(line[1] == "model"):
+            env['model aliases'][line[2]] = line[3]
+        else:
+            print("Aliases are not supported for '%s'" % line[1])
+        return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['alias']=dispatch_alias
+
+
+def dispatch_ls(line, env={}):
+    # case 4:
+    #   inspection code! this code allows a user to inspec the
+    #   list of models and aliases which have been loaded thus far
+    #   and hopefully verify that the commands are behaving as
+    #   intended.
+    if(line[0] == "ls"):
+        if(line[1] == "models"):
+            print("loaded models:")
+            for k in env['models']:
+                print("  %s" % k)
+
+        elif(line[1] == "aliases"):
+            print("loaded aliases:")
+            for k in env['model aliases']:
+                print("  %s -> %s" % (k, aliases[k]))
+
+        else:
+            print("Unknown ls subcommand '%s'!" % (apply(str, line[1:])))
+        return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['ls']=dispatch_ls
+
+
+def dispatch_reset(line, env={}):
+    if(line[0] == "reset"):
+        print("Hard resetting models and aliases...")
+        return ({'models':{}, 'model aliases':{}}, True)
+    else:
+        return (env, False)
+
+_dispatch['reset']=dispatch_reset
+
+
+def dispatch_attack(line,env={}):
+    # case 3:
+    #    attack code! this is what this entire tool was built for...
+    #    grammar is as follows:
+    #    "attack <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end] \
+    #            <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]"
+    #
+    #    This structure allows for attacks to be computed both against
+    #    basic stats and against modified stats, such as a +5 arm
+    #    effect (Stryker's ult), a shield spell or soforth.
+    if(line[0] == "attack"):
+        a_model = line[1]
+        a_with,i = helpers.parse_with(line, 2)
+        d_model = line[i]
+        i += 1
+        d_with,i = helpers.parse_with(line, i)
+
+        a_model = env['models'][helpers.resolve_name(a_model, env['model aliases'])]
+        d_model = env['models'][helpers.resolve_name(d_model, env['model aliases'])]
+
+        # FIXME
+        #    apply the stat changes to a_model as specified
+
+        # FIXME
+        #    apply the stat changes to d_model as specified
+
+        #############################################
+        # now go ahead and do the attack evaluation #
+        #############################################
+        wm.evaluate_attack(a_model, d_model)
+
+        return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['attack']=dispatch_attack
+
+
+################################################################################
+################ now use the _dispatch table to execute commands ###############
+################ below this point there should never be changes  ###############
+################################################################################
+def dispatch(line, env={}):
+    if (line[0] in _dispatch):
+        return _dispatch[line[0]](line, env=env)
+    else:
+        return (env, False)

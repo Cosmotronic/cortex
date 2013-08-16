@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Authored by Reid "arrdem" McKenzie, 10/09/2013
 # Licenced under the terms of the EPL 1.0
+import stats
 
 # imports first
 import json
@@ -311,3 +312,48 @@ class Army():
                 pointval += m['pc']
         self.points = pointval
         return None
+
+
+def evaluate_attack(src_model, tgt_model):
+    """Takes a pair of Model objects and computes the first's options to
+    damage the second, printing a reasonable English table to Standard
+    Out. Intended for REPL use, not yet suited for use by an AI in
+    computing weapon selection.
+
+    """
+
+    mele_weps = [w for w in src_model.weapons if w['type'] == "melee"] 
+    ranged_weps = [w for w in src_model.weapons if w['type'] == "ranged"]
+
+    # compute boosted/unboosted hit odds
+    unboosted_ranged_hit = stats.odds_of_beating(2, (tgt_model.defence - src_model.rat))
+    boosted_ranged_hit = stats.odds_of_beating(3, (tgt_model.defence - src_model.rat))
+    print("Hit odds with ranged weapons:\n  unboosted: %f\n  boosted: %f"
+          % (unboosted_ranged_hit, boosted_ranged_hit))
+
+    unboosted_melee_hit = stats.odds_of_beating(2, (tgt_model.defence - src_model.mat))
+    boosted_melee_hit = stats.odds_of_beating(3, (tgt_model.defence - src_model.mat))
+    print("Hit odds with melee weapons:\n  unboosted: %f\n  boosted: %f"
+          % (unboosted_melee_hit, boosted_melee_hit))
+
+    print("Damage options:")
+    # compute the boosted/unboosted damage outcomes
+    if(len(src_model.weapons) > 0):
+        for w in src_model.weapons:
+            print("  using %s: (%s:%f)" % (w['name'], w['type'], w['rng']))
+            pow = w['pow'] + (src_model.strength if w['type'] == 'melee' else 0)
+            unboosted_dmg = stats.avg_damage(2, (pow - tgt_model.armor))
+            boosted_dmg = stats.avg_damage(3, (pow - tgt_model.armor))
+            
+            print("    unbooosted: %d\n    boosted: %d"
+                  % (unboosted_dmg, boosted_dmg))
+    else:
+        print("  No weapons on this model!")
+
+    # FIXME
+    #    This function should store the weapon damage and hit numbers
+    #    and return it in a reasonable structure that an AI could make
+    #    use of rather than barfing it to standard out and promptly
+    #    forgetting about it.
+    return None
+
