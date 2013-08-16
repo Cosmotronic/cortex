@@ -254,7 +254,7 @@ class Army():
 
         """
         inbj = json.loads(file.read(),
-                          object_hook=lambda(x): Army(Object(), x))
+                          object_hook=lambda x: Army(Object(), x))
         army = {}
         for name in inbj.list:
             model = None
@@ -287,7 +287,7 @@ class Army():
         """
 
         outbj = copy.copy(self)
-        outbj.list = map(lambda (k,v): v.name, self.list)
+        outbj.list = map(lambda k,v: v.name, self.list)
         json.dump(outbj, file)
         return None
 
