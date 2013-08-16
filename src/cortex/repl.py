@@ -17,8 +17,14 @@ def dispatch_load(line, env={}):
         # what are we loading?
         if(line[1] == "models"):
             if(os.path.exists(os.path.abspath(line[2]))):
-                new_models = {m['name']:wm.Model(m)
-                              for m in json.load(open(line[2]))}
+                new_models = {}
+                try:
+                    new_models = {m['name']:wm.Model(m)
+                                  for m in json.load(open(line[2]))}
+                except ValueError as e:
+                    print("Error parsing data file '%s':\n  %s" % (line[2], e))
+                    return (env, True)
+
                 env['models'] = dict(env['models'].items() + new_models.items())
             else:
                 print("Error: no such file %s" % line[2])
