@@ -132,6 +132,7 @@ def repl(file_like, aliases={}, models={}):
             line = []
             if(file_like == sys.stdin):
                 sys.stdout.write("->> ")
+                sys.stdout.flush()
                 line = file_like.readline()
                 line = shell_read_str(line)
                 line = [s.strip() for s in line]
