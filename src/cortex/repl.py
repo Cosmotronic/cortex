@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # Authored by Reid "arrdem" McKenzie, 10/09/2013
 # Licenced under the terms of the EPL 1.0
-import helpers
-import wm
+import cortex.helpers as helpers
+import cortex.wm as wm
 
 import os.path
 import json
