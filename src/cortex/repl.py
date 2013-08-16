@@ -166,7 +166,7 @@ def dispatch_attack(line,env={}):
     outcomes of such an attack.
 
     Valid commands are:
-        'attack <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end] \
+        'attack <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]
                 <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]'
 
     """
@@ -196,6 +196,49 @@ def dispatch_attack(line,env={}):
         return (env, False)
 
 _dispatch['attack']=dispatch_attack
+
+
+def dispatch_help(line, env={}):
+    """Help code!
+
+    This code serves to inform users of what Cortex has to offer and
+    assist users in understanding how to use Cortex effectively by
+    providing command documentation and sample usages.
+
+    Commands are parsed naively, splitting at spaces unless reading a
+    quoted string, string escaping is not supported.
+    
+    Examples:
+        'help foo bar baz'    -> ['help', 'foo', 'bar', 'baz']
+        'help "foo bar" baz'  -> ['help', 'foo bar', 'baz']
+        'help "foo 'bar' baz" -> ['help', 'foo \'bar\' baz']
+    
+    Stuff that will break:
+        'help "foo bar baz'      <- all quotes must be matched
+        'help "foo \"bar\" baz"' <- escaping is not permitted
+
+    Valid commands are:
+        'help'           - lists all commands
+        'help <command>' - prints the help info for a command
+
+    """
+    if(line[0] == "help"):
+        if(len(line) > 1):
+            if line[1] in _dispatch:
+                help(_dispatch[line[1]])
+                return (env, True)
+            else:
+                print("No such command %s" % line[1])
+                return (env, False)
+        else:
+            print("Valid commands are:")
+            for fn in _dispatch:
+                print("  %s" % fn)
+            return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['help']=dispatch_help
 
 
 ################################################################################

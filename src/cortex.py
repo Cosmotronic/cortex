@@ -9,37 +9,18 @@ import os.path
 
 
 def repl(file_like, env={}):
+    """Repl code!
 
-    """Implemented Commands:
-     "load models <filename>"
-        loads a model descriptor file, being a list of Model compatible
-        JSON objects and enters them into the interpreter's model table.
+    This function serves to read commands from a file-like object
+    (either an actual file when reading the Cortex config file or
+    standard input when interacting with a user) and relay commands to
+    their implementations in cortex.repl as needed. 
 
-     "alias model <alias> <name>"
-        creates an alias for a model, hopefully something easier to type
-    
-     "ls models"
-        enumerates the loaded models by name
-    
-     "ls aliases"
-        enumerates the loaded aliases by abbrev -> real name
-    
-     "attack <model name> [with modifiers...] <model name> [with modifiers...]"
-        enumerates and evaluates all attack options for one model
-        against another, evaluating every weapon the attacking model
-        has against the target at range and in charge. Attacking
-        warcasters and warjacks will compute the probable outcomes of
-        different boosting strategies as well.
-    
-     "reset"
-        clears out all the state of the repl, essentially restarting
-        it without quitting and reloading
-    
-     "quit" | "exit" | ":q"
-        exits the Cortex program
+    All this function implements and shall ever implement is
+    persistance of the environment state between commands and the
+    commands required to break _out_ of the repl loop.
 
     """
-
     retry = False
     while True:
         if(not retry):
@@ -51,15 +32,10 @@ def repl(file_like, env={}):
                 line = helpers.shell_read_str(line)
                 line = [s.strip() for s in line]
 
-        # case -2:
+        # case -1:
         #    deal with reading an empty line
         if(len(line) == 0):
             continue
-
-        # case -1:
-        #    help code! gotta help t3h pplz out!
-        if(line[0] == "help"):
-            help(repl)
 
         # case 0:
         #    exit code! gotta be able to quit...
@@ -94,7 +70,7 @@ def repl(file_like, env={}):
             env = new_env
             continue
 
-        else:
+        elif(not code):
             # FIXME:
             #    look up line[0] from the alias table, set line[] and
             #    restart by setting the retry flag!
