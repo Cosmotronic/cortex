@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Authored by Reid "arrdem" McKenzie, 10/09/2013
 # Licenced under the terms of the EPL 1.0
-import stats
-import wm
+import cortex.stats as stats
+import cortex.wm as wm
+import cortex.repl as repl
 
 import sys
 import json
