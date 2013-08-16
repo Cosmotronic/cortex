@@ -96,7 +96,53 @@ def shell_read_str(line):
     return split
 
 
+def chunks(l, n):
+    """Takes a sequence l and breaks it into length n chunks.
+
+    Usage:
+    >>> chunks([1, 2, 3, 4], 2)
+    [[1, 2], [3, 4]]
+
+    """
+    return [l[i:i+n] for i in range(0, len(l), n)]
+
+def parse_with(line, i):
+    """Reads a 'with ... end' block out of an arguments list, given a
+    start index and a list this returns a k:v map of the with params
+    and the i at 'end' token.
+
+    """
+    with_list = []
+    j = i
+    if(i < len(line) and line[i] == "with"):
+        while(line[i] != "end" and i < len(line)):
+            print(i, line[i])
+            if(i == len(line)):
+                print("Error, no 'end' found in the attacker modifier list!")
+            else:
+                i += 1
+        with_list = line[j+1:i]
+    i += 1
+
+    return ({a:int(b) for a,b in chunks(with_list,2)}, i)
+
+
+def resolve_name(start, aliases):
+    """Given an initial name and an aliases table, this function attempts
+    to resolve a "final" or terminal name in the aliases sequence. If
+    at any point the aliases table entry for the current name is None
+    then the current name is returned.
+
+    Note: This code does _not_ check for or prevent circular aliases.
+
+    """
+    while start in aliases:
+        start = aliases[start]
+    return start
+
+
 def repl(file_like, aliases={}, models={}):
+
     """Implemented Commands:
      "load models <filename>"
         loads a model descriptor file, being a list of Model compatible
@@ -194,48 +240,15 @@ def repl(file_like, aliases={}, models={}):
         #    basic stats and against modified stats, such as a +5 arm
         #    effect (Stryker's ult), a shield spell or soforth.
         elif(line[0] == "attack"):
-            # FIXME
-            #    INLINE ARGUMENT PARSING IS DISGUSTING AND SHOULD BE REFACTORED
-            
-            a_model = line[1]
-            a_with = 2
-            i = 2
+            a_with,i = parse_with(line, 2)
+            d_with,i = parse_with(line, i)
 
-            if(i < len(line) and line[i] == "with"):
-                while(line[i] != "end" and i < len(line)):
-                    i += 1
-                if(i == len(line)):
-                    print("Error, no 'end' found in the attacker modifier list!")
-                else:
-                    i += 1
-            a_with = line[a_with:i]
-
-            # pull a_model's real name out of aliases
-            while(not a_model in models and a_model in aliases):
-                a_model = aliases[a_model]
-            a_model = models[a_model]
+            a_model = models[resolve_name(a_model, aliases)]
+            d_model = models[resolve_name(d_model, aliases)]
             
+
             # FIXME
             #    apply the stat changes to a_model as specified
-
-                    
-            d_model = line[i]
-            i += 1
-            d_with = i
-
-            if(i < len(line) and line[i] == "with"):
-                while(line[i] != "end" and i < len(line)):
-                    i += 1
-                if(i == len(line)):
-                    print("Error, no 'end' found in the defender modifier list!")
-                else:
-                    i += 1
-            d_with = line[d_with:i]
-
-            # pull d_model's real name out of aliases
-            while(not d_model in models and d_model in aliases):
-                d_model = aliases[d_model]
-            d_model = models[d_model]
 
             # FIXME
             #    apply the stat changes to d_model as specified
@@ -243,14 +256,6 @@ def repl(file_like, aliases={}, models={}):
             #############################################
             # now go ahead and do the attack evaluation #
             #############################################
-
-            #print(a_model, a_with)
-            #print(d_model, d_with)
-
-            # FIXME:
-            #
-            #    figure out how to apply the modifier list before
-            #    evaluating the attack...
             evaluate_attack(a_model, d_model)
 
         # case 4:
