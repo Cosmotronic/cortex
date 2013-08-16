@@ -11,7 +11,7 @@ _dispatch = {}
 
 
 def dispatch_load(line, env={}):
-    """Load code! gotta be able to read in datafiles...  
+    """Load code! gotta be able to read in datafiles...
 
     This function takes responsability for loading models and when
     they are implemented aliases and armies from long term storage in
@@ -62,7 +62,7 @@ _dispatch['load'] = dispatch_load
 def dispatch_alias(line, env={}):
     """Alias code! I want to be able to create aliases for models...
 
-    This function takes responsability for 
+    This function takes responsability for
 
     As this is a refactored block out of cortex/repl, the invocation
     is simply (line, env={ .. }). As with the other dispatch_*
@@ -90,8 +90,8 @@ _dispatch['alias']=dispatch_alias
 
 
 def dispatch_ls(line, env={}):
-    """Inspection code! 
-    
+    """Inspection code!
+
     this code allows a user to inspect the list of models and aliases
     which have been loaded thus far and hopefully verify that the
     loading commands are behaving as intended.
@@ -158,7 +158,7 @@ _dispatch['reset']=dispatch_reset
 
 
 def dispatch_attack(line,env={}):
-    """Attack code! 
+    """Attack code!
 
     This is what this entire tool was built for... It parses an attack
     description, being one model vs another, then computes and dumps a
@@ -207,12 +207,12 @@ def dispatch_help(line, env={}):
 
     Commands are parsed naively, splitting at spaces unless reading a
     quoted string, string escaping is not supported.
-    
+
     Examples:
         'help foo bar baz'    -> ['help', 'foo', 'bar', 'baz']
         'help "foo bar" baz'  -> ['help', 'foo bar', 'baz']
         'help "foo 'bar' baz" -> ['help', 'foo \'bar\' baz']
-    
+
     Stuff that will break:
         'help "foo bar baz'      <- all quotes must be matched
         'help "foo \"bar\" baz"' <- escaping is not permitted

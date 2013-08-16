@@ -14,7 +14,7 @@ def repl(file_like, env={}):
     This function serves to read commands from a file-like object
     (either an actual file when reading the Cortex config file or
     standard input when interacting with a user) and relay commands to
-    their implementations in cortex.repl as needed. 
+    their implementations in cortex.repl as needed.
 
     All this function implements and shall ever implement is
     persistance of the environment state between commands and the
@@ -47,7 +47,7 @@ def repl(file_like, env={}):
         elif(line[0] == "break"):
             break
 
-        # case 2: 
+        # case 2:
         #    index through the _repl system to dispatch commands in a
         #    relatively modular and useful manner.
         #
@@ -105,4 +105,3 @@ if __name__ == '__main__':
         #print("loading config file...")
         env = repl(open("~/.cortexrc"))
     repl(sys.stdin, env=env)
-        

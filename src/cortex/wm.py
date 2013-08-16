@@ -344,7 +344,7 @@ def evaluate_attack(src_model, tgt_model):
             pow = w['pow'] + (src_model.strength if w['type'] == 'melee' else 0)
             unboosted_dmg = stats.avg_damage(2, (pow - tgt_model.armor))
             boosted_dmg = stats.avg_damage(3, (pow - tgt_model.armor))
-            
+
             print("    unbooosted: %d\n    boosted: %d"
                   % (unboosted_dmg, boosted_dmg))
     else:
@@ -356,4 +356,3 @@ def evaluate_attack(src_model, tgt_model):
     #    use of rather than barfing it to standard out and promptly
     #    forgetting about it.
     return None
-
