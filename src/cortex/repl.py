@@ -245,6 +245,39 @@ def dispatch_help(line, env={}):
 _dispatch['help']=dispatch_help
 
 
+def dispatch_stats(line, env={}):
+    """Stat printing code!
+
+    Because `ls card <card>` doesn't make any damn sense we have stats! Stats
+    exists to print the stat line and weapons stats for some card, and operates
+    by looking up the stats from the env object and then writing them to
+    standard out.
+
+    Valid commands:
+        'stats <card>'
+
+    """
+    if(line[0] == "stats"):
+        if(len(line) >= 2 and line[1] in env['models']):
+            model = env['models'][line[1]]
+            print("%s:\n spd:%d str:%d mat:%d rat:%d def:%d arm:%d cmd:%d"
+                  % (model.name, model.speed, model.strength, model.mat,
+                     model.rat, model.defence, model.armor, model.cmd))
+            if(len(model.weapons) > 0):
+                print(" weapons:")
+                for w in model.weapons:
+                    print("  %s (%s, rng:%f) pow:%d"
+                          % (w['name'], w['type'], w['rng'], w['pow']))
+            else:
+                print(" no weapons.")
+
+        return (env, True)
+    else:
+        return (env, False)
+
+_dispatch['stats'] = dispatch_stats
+
+
 ################################################################################
 ################ now use the _dispatch table to execute commands ###############
 ################ below this point there should never be changes  ###############
