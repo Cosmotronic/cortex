@@ -7,8 +7,8 @@ def roll_combinatons(n_dice, val):
     if(n_dice == 0):
         return 0
 
-    elif(n_dice == 1 
-         and val > 0 
+    elif(n_dice == 1
+         and val > 0
          and val < 7):
         return 1
 
