@@ -27,8 +27,12 @@ def dispatch_load(line, env={}):
 
     """
     if(line[0] == "load"):
+        if(len(line) < 2):
+            help(dispatch_load)
+            return (env, False)
+
         # what are we loading?
-        if(line[1] == "models"):
+        elif(line[1] == "models"):
             file = helpers.unixpath(line[2])
             if(os.path.exists(file)):
                 new_models = {}
@@ -83,9 +87,18 @@ def dispatch_alias(line, env={}):
 
     """
     if(line[0] == "alias"):
+        if(len(line) < 2):
+            help(dispatch_alias)
+            return (env, False)
+
         # what alias type are we creating?
-        if(line[1] == "model"):
-            env['model aliases'][line[2]] = line[3]
+        elif(line[1] == "model"):
+            if(len(line) < 4):
+                help(dispatch_alias)
+                return (env, False)
+            else:
+                env['model aliases'][line[2]] = line[3]
+                return (env, True)
         else:
             print("Aliases are not supported for '%s'" % line[1])
         return (env, True)
@@ -113,7 +126,11 @@ def dispatch_ls(line, env={}):
 
     """
     if(line[0] == "ls"):
-        if(line[1] == "models"):
+        if(len(line) < 2):
+            help(dispatch_ls)
+            return (env, False)
+
+        elif(line[1] == "models"):
             print("loaded models:")
             for k in env['models']:
                 print("  %s" % k)
@@ -124,7 +141,8 @@ def dispatch_ls(line, env={}):
                 print("  %s -> %s" % (k, aliases[k]))
 
         else:
-            print("Unknown ls subcommand '%s'!" % (apply(str, line[1:])))
+            print("Unknown ls subcommand '%s'!" % (" ".join(line[1:])))
+
         return (env, True)
     else:
         return (env, False)
@@ -177,27 +195,32 @@ def dispatch_attack(line,env={}):
 
     """
     if(line[0] == "attack"):
-        a_model = line[1]
-        a_with,i = helpers.parse_with(line, 2)
-        d_model = line[i]
-        i += 1
-        d_with,i = helpers.parse_with(line, i)
+        if(len(line) < 3):
+            help(dispatch_attack)
+            return (env, False)
 
-        a_model = env['models'][helpers.resolve_name(a_model, env['model aliases'])]
-        d_model = env['models'][helpers.resolve_name(d_model, env['model aliases'])]
+        else:
+            a_model = line[1]
+            a_with,i = helpers.parse_with(line, 2)
+            d_model = line[i]
+            i += 1
+            d_with,i = helpers.parse_with(line, i)
 
-        # FIXME
-        #    apply the stat changes to a_model as specified
+            a_model = env['models'][helpers.resolve_name(a_model,
+                                                         env['model aliases'])]
+            d_model = env['models'][helpers.resolve_name(d_model,
+                                                         env['model aliases'])]
 
-        # FIXME
-        #    apply the stat changes to d_model as specified
+            # FIXME
+            #    apply the stat changes to a_model as specified
+            # FIXME
+            #    apply the stat changes to d_model as specified
 
-        #############################################
-        # now go ahead and do the attack evaluation #
-        #############################################
-        wm.evaluate_attack(a_model, d_model)
-
-        return (env, True)
+            #############################################
+            # now go ahead and do the attack evaluation #
+            #############################################
+            wm.evaluate_attack(a_model, d_model)
+            return (env, True)
     else:
         return (env, False)
 
