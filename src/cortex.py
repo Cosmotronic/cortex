@@ -29,8 +29,15 @@ def repl(file_like, env={}):
                 sys.stdout.write("->> ")
                 sys.stdout.flush()
                 line = file_like.readline()
-                line = helpers.shell_read_str(line)
-                line = [s.strip() for s in line]
+
+            else:
+                pos = file_like.tell()
+                line = file_like.readline()
+                if(pos == file_like.tell()):
+                    break
+
+            line = helpers.shell_read_str(line)
+            line = [s.strip() for s in line]
 
         # case -1:
         #    deal with reading an empty line
@@ -59,12 +66,7 @@ def repl(file_like, env={}):
         #    persists. How to keep help usable when I only have a
         #    hashmap of fns that I can update quickly?
         new_env, code = {}, False
-        try:
-            new_env, code = _repl.dispatch(line, env=env)
-
-        except Exception as e:
-            print("Command failed: '%s'" % e)
-            continue
+        new_env, code = _repl.dispatch(line, env=env)
 
         if(code):
             env = new_env
@@ -100,8 +102,11 @@ if __name__ == '__main__':
     #   commands were being typed at the repl before dropping into
     #   read/eval/print mode for user IO.
     #
-    env = {'models':{}, 'model aliases':{}}
-    if os.path.exists(os.path.abspath("~/.cortexrc")):
-        #print("loading config file...")
-        env = repl(open("~/.cortexrc"))
-    repl(sys.stdin, env=env)
+    _env = {'models':{}, 'model aliases':{}}
+
+    file=helpers.unixpath("~/.cortexrc")
+
+    if os.path.exists(file):
+        print("loading config file...")
+        _env = repl(open(file), env=_env)
+    repl(sys.stdin, env=_env)

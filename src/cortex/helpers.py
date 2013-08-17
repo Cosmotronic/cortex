@@ -3,6 +3,13 @@
 # Licenced under the terms of the EPL 1.0
 
 
+import os.path
+
+
+def unixpath(p):
+    return os.path.expanduser(os.path.expandvars(p))
+
+
 def chunks(l, n):
     """Takes a sequence l and breaks it into length n chunks.
 
@@ -12,6 +19,7 @@ def chunks(l, n):
 
     """
     return [l[i:i+n] for i in range(0, len(l), n)]
+
 
 def parse_with(line, i):
     """Reads a 'with ... end' block out of an arguments list, given a

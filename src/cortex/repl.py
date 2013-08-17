@@ -29,13 +29,14 @@ def dispatch_load(line, env={}):
     if(line[0] == "load"):
         # what are we loading?
         if(line[1] == "models"):
-            if(os.path.exists(os.path.abspath(line[2]))):
+            file = helpers.unixpath(line[2])
+            if(os.path.exists(file)):
                 new_models = {}
                 try:
                     new_models = {m['name']:wm.Model(m)
-                                  for m in json.load(open(line[2]))}
+                                  for m in json.load(open(file))}
                 except ValueError as e:
-                    print("Error parsing data file '%s':\n  %s" % (line[2], e))
+                    print("Error parsing data file '%s':\n  %s" % (file, e))
                     return (env, True)
 
                 _tmp = dict()
@@ -43,6 +44,7 @@ def dispatch_load(line, env={}):
                 _tmp.update(new_models)
 
                 env['models'] = _tmp
+                return (env, True)
             else:
                 print("Error: no such file %s" % line[2])
 
