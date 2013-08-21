@@ -65,6 +65,43 @@ Implemented Commands:
 
 ## Data format
 
+Cortex is designed to store models in simple JSON, with a data file
+being a list containing well formed objects representing models. This
+is an example of a well formed model object for a fictional model.
+
+```json
+{"name":"Walking Dishwasher",
+ "type":"warjack",
+ "size":"large",
+ "attrs":{"modules":["l","r","m","c"],
+	      "pc":9,
+		  "armor":20,
+		  "defence":10,
+		  "rat":6,
+		  "mat":7,
+		  "strength":12,
+		  "faction":"arrdem",
+		  "arcs":["front"],
+		  "c":{"front":[[3,0],[3,1],[4,0]]},
+		  "m":{"front":[[1,0],[2,0],[2,1]]},
+		  "r":{"front":[[5,0],[4,1],[4,2]]},
+		  "l":{"front":[[0,0],[1,1],[1,2]]},
+		  "boxes":{"front":[4,5,6,6,5,4]},
+		  "speed":5,
+		  "reach":true},
+ "weapons":[{"name":"Flung Brick",
+	         "type":"ranged","attrs":{},
+			 "rng":16,"rof":1,"pow":15},
+			{"name":"Heavy Noodle",
+			 "type":"melee","attrs":{"reach":true},
+			 "rng":2.0,"pow":5}]}
+```
+
+Many of these datapoints, such as the arcs and boxes details, are
+currently ignored. However should cortex ever grow beyond its current
+scope and attempt to plan actions they would become relivant and are
+hence specified.
+
 ## Legal
 
 I cannot and do not and will not provide the datafiles describing the
