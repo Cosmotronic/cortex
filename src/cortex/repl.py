@@ -187,11 +187,17 @@ def dispatch_attack(line,env={}):
     This is what this entire tool was built for... It parses an attack
     description, being one model vs another, then computes and dumps a
     stats table projecting the success likelyhoods and average
-    outcomes of such an attack.
+    outcomes of such an attack. The <name> fields are resolved for
+    aliases, so feel free to create shortcuts.
 
     Valid commands are:
-        'attack <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]
-                <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]'
+        'attack <name> [with ([def|arm|pow|mat|rat|strength] [-|+|=]<number>)+ end]
+                <name> [with ([def|arm|pow|mat|rat|strength] [-|+|=]<number>)+ end]'
+
+    Examples:
+        'attack Defender with mat +2 strength +5 end Lancer'
+        'attack Defender Lancer'
+        'attack estryker Defender'
 
     """
     if(line[0] == "attack"):
@@ -206,20 +212,65 @@ def dispatch_attack(line,env={}):
             i += 1
             d_with,i = helpers.parse_with(line, i)
 
+            # FIXME:
+            #    this code should deal nicely with the case of the
+            #    named model(s) not being found. at the moment this
+            #    would be a program fatal error with a garbage error
+            #    message.
+
             a_model = env['models'][helpers.resolve_name(a_model,
                                                          env['model aliases'])]
             d_model = env['models'][helpers.resolve_name(d_model,
                                                          env['model aliases'])]
 
-            # FIXME
-            #    apply the stat changes to a_model as specified
-            # FIXME
-            #    apply the stat changes to d_model as specified
+            def update_fn(stat_map):
+                def closured_fn(state):
+                    """A semantic closure hack to implement a real lambda with an
+                    environment. Friggin python man.
 
-            #############################################
+                    """
+                    attr_aliases = {'str':'strength','def':'defense','arm':'armor'}
+                    for key in stat_map:
+                        tgt_key = key
+                        # a little hack to get the str alias..
+                        if key in attr_aliases:
+                            tgt_key = attr_aliases[key]
+                        # throw a warning and continue for weird keys..
+                        if tgt_key not in state:
+                            print("WARNING: modifier for %s ignored!" % key)
+                            continue
+
+                        # parse and apply the val!
+                        val = stat_map[key]
+                        if(val[0] == '-'):
+                            state[tgt_key] -= int(val[1:])
+                        elif(val[0] == '='):
+                            state[tgt_key] = int(val[1:])
+                        elif(val[0] == '+'):
+                            state[tgt_key] += int(val[1:])
+                        else:
+                            state[tgt_key] += int(val)
+                    return state
+                return closured_fn
+
+            a_id = a_model.addEffect(update_fn(a_with))
+            d_id = d_model.addEffect(update_fn(d_with))
+
+            # just for grins print the current stats..
+            print("\nattacking:")
+            print(str(a_model))
+            print("\ndefending:")
+            print(str(d_model))
+            print("\n")
+
             # now go ahead and do the attack evaluation #
-            #############################################
             wm.evaluate_attack(a_model, d_model)
+
+            # remove those effects from the models..
+            a_model.removeEffect(a_id)
+            d_model.removeEffect(d_id)
+
+            # and return!
             return (env, True)
     else:
         return (env, False)
@@ -284,19 +335,11 @@ def dispatch_stats(line, env={}):
     """
     if(line[0] == "stats"):
         if(len(line) >= 2 and line[1] in env['models']):
-            model = env['models'][line[1]]
-            print("%s:\n spd:%d str:%d mat:%d rat:%d def:%d arm:%d cmd:%d"
-                  % (model.name, model.speed, model.strength, model.mat,
-                     model.rat, model.defence, model.armor, model.cmd))
-            if(len(model.weapons) > 0):
-                print(" weapons:")
-                for w in model.weapons:
-                    print("  %s (%s, rng:%f) pow:%d"
-                          % (w['name'], w['type'], w['rng'], w['pow']))
-            else:
-                print(" no weapons.")
-
+            model = env['models'][helpers.resolve_name(line[1],
+                                                       env['model aliases'])]
+            print(str(model))
         return (env, True)
+
     else:
         return (env, False)
 

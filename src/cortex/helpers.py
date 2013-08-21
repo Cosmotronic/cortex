@@ -31,7 +31,6 @@ def parse_with(line, i):
     j = i
     if(i < len(line) and line[i] == "with"):
         while(line[i] != "end" and i < len(line)):
-            print(i, line[i])
             if(i == len(line)):
                 print("Error, no 'end' found in the attacker modifier list!")
             else:
@@ -39,7 +38,7 @@ def parse_with(line, i):
         with_list = line[j+1:i]
         i += 1
 
-    return ({a:int(b) for a,b in chunks(with_list,2)}, i)
+    return ({a:b for a,b in chunks(with_list,2)}, i)
 
 
 def resolve_name(start, aliases):
