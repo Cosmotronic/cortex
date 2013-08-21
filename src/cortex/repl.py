@@ -27,15 +27,20 @@ def dispatch_load(line, env={}):
 
     """
     if(line[0] == "load"):
+        if(len(line) < 2):
+            help(dispatch_load)
+            return (env, False)
+
         # what are we loading?
-        if(line[1] == "models"):
-            if(os.path.exists(os.path.abspath(line[2]))):
+        elif(line[1] == "models"):
+            file = helpers.unixpath(line[2])
+            if(os.path.exists(file)):
                 new_models = {}
                 try:
                     new_models = {m['name']:wm.Model(m)
-                                  for m in json.load(open(line[2]))}
+                                  for m in json.load(open(file))}
                 except ValueError as e:
-                    print("Error parsing data file '%s':\n  %s" % (line[2], e))
+                    print("Error parsing data file '%s':\n  %s" % (file, e))
                     return (env, True)
 
                 _tmp = dict()
@@ -43,6 +48,7 @@ def dispatch_load(line, env={}):
                 _tmp.update(new_models)
 
                 env['models'] = _tmp
+                return (env, True)
             else:
                 print("Error: no such file %s" % line[2])
 
@@ -81,9 +87,18 @@ def dispatch_alias(line, env={}):
 
     """
     if(line[0] == "alias"):
+        if(len(line) < 2):
+            help(dispatch_alias)
+            return (env, False)
+
         # what alias type are we creating?
-        if(line[1] == "model"):
-            env['model aliases'][line[2]] = line[3]
+        elif(line[1] == "model"):
+            if(len(line) < 4):
+                help(dispatch_alias)
+                return (env, False)
+            else:
+                env['model aliases'][line[2]] = line[3]
+                return (env, True)
         else:
             print("Aliases are not supported for '%s'" % line[1])
         return (env, True)
@@ -111,7 +126,11 @@ def dispatch_ls(line, env={}):
 
     """
     if(line[0] == "ls"):
-        if(line[1] == "models"):
+        if(len(line) < 2):
+            help(dispatch_ls)
+            return (env, False)
+
+        elif(line[1] == "models"):
             print("loaded models:")
             for k in env['models']:
                 print("  %s" % k)
@@ -122,7 +141,8 @@ def dispatch_ls(line, env={}):
                 print("  %s -> %s" % (k, aliases[k]))
 
         else:
-            print("Unknown ls subcommand '%s'!" % (apply(str, line[1:])))
+            print("Unknown ls subcommand '%s'!" % (" ".join(line[1:])))
+
         return (env, True)
     else:
         return (env, False)
@@ -167,35 +187,94 @@ def dispatch_attack(line,env={}):
     This is what this entire tool was built for... It parses an attack
     description, being one model vs another, then computes and dumps a
     stats table projecting the success likelyhoods and average
-    outcomes of such an attack.
+    outcomes of such an attack. The <name> fields are resolved for
+    aliases, so feel free to create shortcuts.
 
     Valid commands are:
-        'attack <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]
-                <name> [with ([def|arm|pow|mat|rat] [-|+]<number>)+ end]'
+        'attack <name> [with ([def|arm|pow|mat|rat|strength] [-|+|=]<number>)+ end]
+                <name> [with ([def|arm|pow|mat|rat|strength] [-|+|=]<number>)+ end]'
+
+    Examples:
+        'attack Defender with mat +2 strength +5 end Lancer'
+        'attack Defender Lancer'
+        'attack estryker Defender'
 
     """
     if(line[0] == "attack"):
-        a_model = line[1]
-        a_with,i = helpers.parse_with(line, 2)
-        d_model = line[i]
-        i += 1
-        d_with,i = helpers.parse_with(line, i)
+        if(len(line) < 3):
+            help(dispatch_attack)
+            return (env, False)
 
-        a_model = env['models'][helpers.resolve_name(a_model, env['model aliases'])]
-        d_model = env['models'][helpers.resolve_name(d_model, env['model aliases'])]
+        else:
+            a_model = line[1]
+            a_with,i = helpers.parse_with(line, 2)
+            d_model = line[i]
+            i += 1
+            d_with,i = helpers.parse_with(line, i)
 
-        # FIXME
-        #    apply the stat changes to a_model as specified
+            a_model = helpers.resolve_name(a_model,env['model aliases'])
+            if a_model in env['models']:
+                a_model = env['models'][a_model]
+            else:
+                print("ERROR: model %s was not found! aborting..." % a_model)
+                return (env, False)
 
-        # FIXME
-        #    apply the stat changes to d_model as specified
+            d_model = helpers.resolve_name(d_model,env['model aliases'])
+            if d_model in env['models']:
+                d_model = env['models'][d_model]
+            else:
+                print("ERROR: model %s was not found! aborting..." % d_model)
+                return (env, False)
 
-        #############################################
-        # now go ahead and do the attack evaluation #
-        #############################################
-        wm.evaluate_attack(a_model, d_model)
+            def update_fn(stat_map):
+                def closured_fn(state):
+                    """A semantic closure hack to implement a real lambda with an
+                    environment. Friggin python man.
 
-        return (env, True)
+                    """
+                    attr_aliases = {'str':'strength','def':'defense','arm':'armor'}
+                    for key in stat_map:
+                        tgt_key = key
+                        # a little hack to get the str alias..
+                        if key in attr_aliases:
+                            tgt_key = attr_aliases[key]
+                        # throw a warning and continue for weird keys..
+                        if tgt_key not in state:
+                            print("WARNING: modifier for %s ignored!" % key)
+                            continue
+
+                        # parse and apply the val!
+                        val = stat_map[key]
+                        if(val[0] == '-'):
+                            state[tgt_key] -= int(val[1:])
+                        elif(val[0] == '='):
+                            state[tgt_key] = int(val[1:])
+                        elif(val[0] == '+'):
+                            state[tgt_key] += int(val[1:])
+                        else:
+                            state[tgt_key] += int(val)
+                    return state
+                return closured_fn
+
+            a_id = a_model.addEffect(update_fn(a_with))
+            d_id = d_model.addEffect(update_fn(d_with))
+
+            # just for grins print the current stats..
+            print("\nattacking:")
+            print(str(a_model))
+            print("\ndefending:")
+            print(str(d_model))
+            print("\n")
+
+            # now go ahead and do the attack evaluation #
+            wm.evaluate_attack(a_model, d_model)
+
+            # remove those effects from the models..
+            a_model.removeEffect(a_id)
+            d_model.removeEffect(d_id)
+
+            # and return!
+            return (env, True)
     else:
         return (env, False)
 
@@ -259,19 +338,11 @@ def dispatch_stats(line, env={}):
     """
     if(line[0] == "stats"):
         if(len(line) >= 2 and line[1] in env['models']):
-            model = env['models'][line[1]]
-            print("%s:\n spd:%d str:%d mat:%d rat:%d def:%d arm:%d cmd:%d"
-                  % (model.name, model.speed, model.strength, model.mat,
-                     model.rat, model.defence, model.armor, model.cmd))
-            if(len(model.weapons) > 0):
-                print(" weapons:")
-                for w in model.weapons:
-                    print("  %s (%s, rng:%f) pow:%d"
-                          % (w['name'], w['type'], w['rng'], w['pow']))
-            else:
-                print(" no weapons.")
-
+            model = env['models'][helpers.resolve_name(line[1],
+                                                       env['model aliases'])]
+            print(str(model))
         return (env, True)
+
     else:
         return (env, False)
 
