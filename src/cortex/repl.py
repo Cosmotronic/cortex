@@ -212,16 +212,19 @@ def dispatch_attack(line,env={}):
             i += 1
             d_with,i = helpers.parse_with(line, i)
 
-            # FIXME:
-            #    this code should deal nicely with the case of the
-            #    named model(s) not being found. at the moment this
-            #    would be a program fatal error with a garbage error
-            #    message.
+            a_model = helpers.resolve_name(a_model,env['model aliases'])
+            if a_model in env['models']:
+                a_model = env['models'][a_model]
+            else:
+                print("ERROR: model %s was not found! aborting..." % a_model)
+                return (env, False)
 
-            a_model = env['models'][helpers.resolve_name(a_model,
-                                                         env['model aliases'])]
-            d_model = env['models'][helpers.resolve_name(d_model,
-                                                         env['model aliases'])]
+            d_model = helpers.resolve_name(d_model,env['model aliases'])
+            if d_model in env['models']:
+                d_model = env['models'][d_model]
+            else:
+                print("ERROR: model %s was not found! aborting..." % d_model)
+                return (env, False)
 
             def update_fn(stat_map):
                 def closured_fn(state):
