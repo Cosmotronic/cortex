@@ -122,6 +122,21 @@ class Model():
         # compute update for the other fields
         self.update()
 
+    def __str__(self, weapons=True):
+        statline = ("%s:\n spd:%d str:%d mat:%d rat:%d def:%d arm:%d cmd:%d"
+                    % (self.name, self.speed, self.strength, self.mat,
+                       self.rat, self.defence, self.armor, self.cmd))
+
+        if(len(self.weapons) > 0 and weapons):
+            statline += "\n weapons:"
+            for w in self.weapons:
+                statline += ("\n  %s (%s, rng:%f) pow:%d"
+                             % (w['name'], w['type'], w['rng'], w['pow']))
+        elif(len(self.weapons) == 0 and weapons):
+            statline += "\n no weapons."
+
+        return statline
+
     def update(self):
         """Recomputes the Model's attrs from the statline and effects. Note
         that this function side effects the spd, str, mat, rat, def,
@@ -134,7 +149,8 @@ class Model():
         attrs = copy.deepcopy(self._attrs['attrs'])
 
         # compute updates on the basis of effects
-        for key,e in self.effects:
+        for key in self.effects:
+            e = self.effects[key]
             attrs = e(attrs)
 
         # set fields in self for ease of access defaulting to 0
@@ -156,6 +172,7 @@ class Model():
         """
         id = id or uuid.uuid4()
         self.effects[id] = fn
+        self.update()
         return id
 
     def removeEffect(self, id):
@@ -164,6 +181,7 @@ class Model():
 
         """
         self.effects.pop(id)
+        self.update()
 
 
 class Army():
