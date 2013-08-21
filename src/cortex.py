@@ -57,14 +57,6 @@ def repl(file_like, env={}):
         # case 2:
         #    index through the _repl system to dispatch commands in a
         #    relatively modular and useful manner.
-        #
-        # FIXME:
-        #    it's awesome that I've now done away with all the inline
-        #    control code and abstracted it out to a load time
-        #    computed jump table but the issue of having to update the
-        #    docstrings, especially for this top level repl function
-        #    persists. How to keep help usable when I only have a
-        #    hashmap of fns that I can update quickly?
         new_env, code = {}, False
         new_env, code = _repl.dispatch(line, env=env)
 
